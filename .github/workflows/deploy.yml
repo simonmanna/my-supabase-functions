@@ -9,11 +9,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Install Supabase CLI
         run: |
-          curl -L https://github.com/supabase/cli/releases/latest/download/supabase_ubuntu_amd64.deb -o supabase.deb
-          sudo dpkg -i supabase.deb
-          rm supabase.deb
+          curl -fsSL https://get.supabase.com/install | sh
+          echo "$HOME/.supabase/bin" >> $GITHUB_PATH
+
       - name: Deploy Edge Function
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
