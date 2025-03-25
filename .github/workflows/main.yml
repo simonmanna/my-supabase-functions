@@ -11,30 +11,24 @@ jobs:
     - name: Checkout repository code
       uses: actions/checkout@v4
     
-    - name: Setup Deno
-      uses: denoland/setup-deno@v1
-      with:
-        deno-version: v1.x
-    
     - name: Install Supabase CLI
-      run: |
-        wget https://github.com/supabase/cli/releases/latest/download/supabase-cli_linux_x64.tar.gz tar -xvzf supabase-cli_linux_x64.tar.gz
-        sudo mv supabase /usr/local/bin/
+      uses: supabase/setup-cli@v1
+      with:
+        version: latest
     
-    - name: Verify Supabase and Deno Installation
+    - name: Verify Supabase Installation
       run: |
-        deno --version
         supabase --version
     
     - name: List repository contents
-      run: ls ${{ github.workspace }}
+      run: ls -la ${{ github.workspace }}
     
     - name: Deploy Supabase Edge Functions
       env:
         SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
       run: |
-        supabase functions deploy
+        supabase functions deploy --project-ref ${{ secrets.SUPABASE_PROJECT_ID }} --debug
     
     - name: Job Status
       run: echo "Deployment status is ${{ job.status }}"
