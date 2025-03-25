@@ -236,6 +236,7 @@ async function createOrderWithItems(orderRequest: OrderRequest) {
   // Create a map for storing option details
   let menuOptionsMap = new Map<string, MenuOption>();
 
+  console.log("Creating menu options map:", optionIds);
   // Fetch menu options if we have valid IDs
   if (optionIds.length > 0) {
     const { data: menuOptions, error: optionsError } = await supabaseClient
@@ -243,6 +244,8 @@ async function createOrderWithItems(orderRequest: OrderRequest) {
       .select("id, name, price_adjustment")
       .in("id", optionIds)
       .eq("is_active", true);
+
+    console.log("Fetched menu options from database:", menuOptions);
 
     if (optionsError) {
       console.error("Database error when fetching menu options:", optionsError);
