@@ -234,8 +234,7 @@ async function createOrderWithItems(orderRequest: OrderRequest) {
     const { data: menuOptions, error: optionsError } = await supabaseClient
       .from("menu_options")
       .select("id, name, price_adjustment")
-      .in("id", optionIds)
-      .eq("is_active", true);
+      .in("id", optionIds);
 
     console.log("Fetched menu options from database:", menuOptions);
 
