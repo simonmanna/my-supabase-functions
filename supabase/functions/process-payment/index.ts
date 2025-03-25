@@ -116,11 +116,6 @@ async function createNotification(
 }
 
 async function createOrderWithItems(orderRequest: OrderRequest) {
-  // Validate delivery_person_id is a number
-  // if (typeof orderRequest.delivery_person_id !== "number") {
-  //   throw new Error("delivery_person_id must be a number");
-  // }
-
   const {
     order_items,
     user_id,
@@ -181,10 +176,6 @@ async function createOrderWithItems(orderRequest: OrderRequest) {
     .filter((addon) => addon && addon.id && addon.id.trim() !== "") // Filter out null/empty IDs
     .map((addon) => addon.id);
 
-  // const addonIds = order_items
-  //   .flatMap(item => item.selectedAddons || [])
-  //   .map(addon => addon.id)
-
   console.log("Requested addon IDs:", addonIds);
 
   // Create a map for storing addon prices
@@ -227,14 +218,15 @@ async function createOrderWithItems(orderRequest: OrderRequest) {
     addonPricesMap = new Map(addons.map((addon) => [addon.id, addon]));
   }
 
+  // console.log("selected Option Details: " , item.selectedOptionDetails);
   // Get all valid option IDs from order items
+  // Create a map for storing option details
+  let menuOptionsMap = new Map<string, MenuOption>();
+
   const optionIds = order_items
     .flatMap((item) => item.selectedOptionDetails || [])
     .filter((option) => option && option.id && option.id.trim() !== "")
     .map((option) => option.id);
-
-  // Create a map for storing option details
-  let menuOptionsMap = new Map<string, MenuOption>();
 
   console.log("Creating menu options map:", optionIds);
   // Fetch menu options if we have valid IDs
