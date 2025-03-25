@@ -71,6 +71,50 @@ interface OrderRequest {
   delivery_latitude?: number;
 }
 
+interface NotificationData {
+  user_id: string;
+  order_id: number;
+  title: string;
+  body: string;
+  type: string;
+  is_read: boolean;
+}
+
+// Add this function to create a notification
+async function createNotification(
+  supabaseClient: any,
+  userId: string,
+  orderId: number,
+  title: string,
+  body: string,
+  type: string = "ORDER_STATUS"
+): Promise<any> {
+  try {
+    const { data, error } = await supabaseClient
+      .from("notifications")
+      .insert({
+        user_id: userId,
+        order_id: orderId,
+        title,
+        body,
+        type,
+        is_read: false,
+        created_at: new Date().toISOString(),
+      })
+      .select();
+
+    if (error) {
+      console.error("Error creating notification:", error);
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Error creating notification:", error);
+    return null;
+  }
+}
+
 async function createOrderWithItems(orderRequest: OrderRequest) {
   // Validate delivery_person_id is a number
   // if (typeof orderRequest.delivery_person_id !== "number") {
@@ -440,13 +484,24 @@ async function createOrderWithItems(orderRequest: OrderRequest) {
       delivery_longitude,
       delivery_location2: deliveryLocationGeog,
       tracking_id: pesapalResponse?.order_tracking_id || null,
-	  hi:"hello",
+      hi: "hello",
     })
     .select()
     .single();
 
   if (orderError) {
     throw new Error(`Failed to create order: ${orderError.message}`);
+  }
+
+  if (order) {
+    await createNotification(
+      supabaseClient,
+      user_id,
+      order.id,
+      "Order Placed Successfully!",
+      `Your payment for order #${order.id} will be collected on delivery.`,
+      "ORDER PLACED"
+    );
   }
   // Prepare order items for insertion with recalculated prices
   const orderItemsToInsert = recalculatedItems.map((item) => ({
