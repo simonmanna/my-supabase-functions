@@ -286,9 +286,11 @@ async function createOrderWithItems(orderRequest: OrderRequest) {
 
     // Calculate options price adjustment
     const options_total = (item.selectedOptionDetails || [])
-      .filter((option) => option && option.id && option.id.trim() !== "")
+      .filter(
+        (option) => option && option.optionId && option.optionId.trim() !== ""
+      )
       .reduce((total, option) => {
-        const optionData = menuOptionsMap.get(option.id);
+        const optionData = menuOptionsMap.get(option.optionId);
         if (!optionData) return total;
         return total + (optionData.price_adjustment || 0);
       }, 0);
@@ -319,12 +321,14 @@ async function createOrderWithItems(orderRequest: OrderRequest) {
         })
         .filter(Boolean),
       verified_options: (item.selectedOptionDetails || [])
-        .filter((option) => option && option.id && option.id.trim() !== "")
+        .filter(
+          (option) => option && option.optionId && option.optionId.trim() !== ""
+        )
         .map((option) => {
-          const optionData = menuOptionsMap.get(option.id);
+          const optionData = menuOptionsMap.get(option.optionId);
           if (!optionData) return null;
           return {
-            menu_option_id: option.id,
+            menu_option_id: option.optionId,
             option_name: optionData.name,
             quantity: 1,
             price_adjustment: optionData.price_adjustment || 0,
