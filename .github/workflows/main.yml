@@ -18,8 +18,8 @@ jobs:
     
     - name: Install Supabase CLI
       run: |
-        curl -sL https://supabase.com/docs/guides/cli/getting-started | bash
-        echo "$HOME/.supabase/bin" >> $GITHUB_PATH
+        wget https://github.com/supabase/cli/releases/latest/download/supabase-cli_linux_x64.tar.gz tar -xvzf supabase-cli_linux_x64.tar.gz
+        sudo mv supabase /usr/local/bin/
     
     - name: Verify Supabase and Deno Installation
       run: |
