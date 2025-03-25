@@ -1,0 +1,57 @@
+name: Deploy Supabase Edge Function
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/functions/project1/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Ensures full git history is fetched
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x  # Use latest Deno version
+
+      - name: Install Supabase CLI
+        run: |
+          curl -L https://github.com/supabase/cli/releases/latest/download/supabase_ubuntu_amd64.deb -o supabase.deb
+          sudo dpkg -i supabase.deb
+          rm supabase.deb
+
+      - name: Lint Deno Code
+        run: |
+          cd supabase/functions/project1
+          deno lint
+
+      - name: Run Tests
+        run: |
+          cd supabase/functions/project1
+          deno test
+
+      - name: Check Deno Formatting
+        run: |
+          cd supabase/functions/project1
+          deno fmt --check
+
+      - name: Deploy Edge Function
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: mlpgrevfohpiaepnnsch
+        run: |
+          supabase functions deploy project1 \
+            --project-ref $SUPABASE_PROJECT_REF
+
+      - name: Slack Notification on Failure
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
