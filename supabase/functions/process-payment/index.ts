@@ -225,8 +225,10 @@ async function createOrderWithItems(orderRequest: OrderRequest) {
 
   const optionIds = order_items
     .flatMap((item) => item.selectedOptionDetails || [])
-    .filter((option) => option && option.id && option.id.trim() !== "")
-    .map((option) => option.id);
+    .filter(
+      (option) => option && option.optionId && option.optionId.trim() !== ""
+    )
+    .map((option) => option.optionId);
 
   console.log("Creating menu options map:", optionIds);
   // Fetch menu options if we have valid IDs
