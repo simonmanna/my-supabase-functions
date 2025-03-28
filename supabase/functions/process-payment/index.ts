@@ -26,6 +26,8 @@ interface MenuItem {
   id: number;
   price: number;
   name: string;
+  discount_percentage: number | null;
+  discount_amount: number | null;
 }
 
 interface OrderItem {
@@ -161,7 +163,7 @@ async function createOrderWithItems(orderRequest: OrderRequest) {
 
   const { data: menuItems, error: menuError } = await supabaseClient
     .from("menus")
-    .select("id, price, name")
+    .select("id, price, name, discount_percentage, discount_amount")
     .in(
       "id",
       order_items.map((item) => item.id)
@@ -295,18 +297,39 @@ async function createOrderWithItems(orderRequest: OrderRequest) {
         return total + (optionData.price_adjustment || 0);
       }, 0);
 
+    // const base_price = menuItem.price;
+    // const price = base_price + addon_total + options_total;
+    // const subtotal = price * item.quantity;
+
     const base_price = menuItem.price;
-    const price = base_price + addon_total + options_total;
+    let discounted_price = base_price;
+
+    // Apply discount according to the specified rules
+    if (menuItem.discount_amount !== null) {
+      // If discount_amount is set, it overrides percentage
+      discounted_price = Math.max(0, base_price - menuItem.discount_amount);
+    } else if (menuItem.discount_percentage !== null) {
+      // If discount_percentage is set, calculate dynamically
+      const discount = base_price * (menuItem.discount_percentage / 100);
+      discounted_price = Math.max(0, base_price - discount);
+    }
+    // If both are null, no discount is applied (discounted_price remains base_price)
+
+    const price = discounted_price + addon_total + options_total;
     const subtotal = price * item.quantity;
 
     return {
       ...item,
       name: menuItem.name,
       base_price,
+      discounted_price,
       price,
       addon_total,
       options_total,
       subtotal,
+      discount_applied: base_price !== discounted_price, // Track if discount was applied
+      discount_amount: menuItem.discount_amount,
+      discount_percentage: menuItem.discount_percentage,
       verified_addons: (item.selectedAddons || [])
         .filter((addon) => addon && addon.id && addon.id.trim() !== "")
         .map((addon) => {
@@ -484,7 +507,6 @@ async function createOrderWithItems(orderRequest: OrderRequest) {
       delivery_longitude,
       delivery_location2: deliveryLocationGeog,
       tracking_id: pesapalResponse?.order_tracking_id || null,
-      hi: "hello",
     })
     .select()
     .single();
@@ -499,7 +521,7 @@ async function createOrderWithItems(orderRequest: OrderRequest) {
       user_id,
       order.id,
       "Order Placed Successfully!",
-      `Your payment for order #${order.id} will be collected on delivery.`,
+      `Your Order has been placed successfully. Payment for order #${order.id} will be collected on delivery.`,
       "ORDER PLACED"
     );
   }
@@ -509,6 +531,7 @@ async function createOrderWithItems(orderRequest: OrderRequest) {
     menu_item_id: item.id,
     item_name: item.name,
     base_price: item.base_price,
+    discounted_price: item.discounted_price,
     quantity: item.quantity,
     subtotal: item.subtotal,
     addon_total: item.addon_total,
@@ -521,6 +544,8 @@ async function createOrderWithItems(orderRequest: OrderRequest) {
     is_vegetarian: item.is_vegetarian || false,
     is_vegan: item.is_vegan || false,
     requires_special_preparation: item.requires_special_preparation || false,
+    discount_amount: item.discount_amount, // Add discount amount
+    discount_percentage: item.discount_percentage, // Add discount percentage
   }));
 
   // Insert order items and get their IDs
