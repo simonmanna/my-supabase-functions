@@ -89,7 +89,7 @@ async function createNotification(
   orderId: number,
   title: string,
   body: string,
-  type: string = "ORDER_STATUS"
+  type: string = "ORDER PLACED"
 ): Promise<any> {
   try {
     const { data, error } = await supabaseClient
@@ -373,10 +373,14 @@ async function createOrderWithItems(orderRequest: OrderRequest) {
   // Payment processing based on payment method
   let pesapalResponse = null;
   let initialOrderStatus = status;
+  let PaymentStatus = "";
+  let payment_details = "";
 
   if (payment_method.toLowerCase() === "cash") {
     // For cash payments, no Pesapal integration needed
     // Order status remains as provided (usually "pending")
+    PaymentStatus = "PENDING";
+    payment_details = "Cash On Delivery"; //
     console.log("Processing cash payment - no payment gateway required");
   } else if (payment_method.toLowerCase() === "online") {
     // For online payments, integrate with Pesapal
@@ -387,8 +391,10 @@ async function createOrderWithItems(orderRequest: OrderRequest) {
       phone_number,
       token
     );
-    // For online payments, set status to "Awaiting Payment"
-    initialOrderStatus = "Awaiting Payment";
+    // For online payments, set status to "AWAITING PAYMENT"
+    initialOrderStatus = "AWAITING PAYMENT";
+    PaymentStatus = "AWAITING PAYMENT";
+    payment_details = "Online Payment"; //
   } else {
     throw new Error(`Unsupported payment method: ${payment_method}`);
   }
@@ -499,6 +505,7 @@ async function createOrderWithItems(orderRequest: OrderRequest) {
       delivery_person_id,
       user_id,
       payment_method,
+      payment_details: payment_details,
       total_amount_vat,
       vat,
       order_note,
